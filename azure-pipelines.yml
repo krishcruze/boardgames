@@ -1,0 +1,33 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Checkout source
+- task: Checkout@1
+  displayName: 'Checkout source code'
+
+# Maven build + OWASP Dependency-Check
+- task: Maven@3
+  displayName: 'Maven Build and OWASP Scan'
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'clean install org.owasp:dependency-check-maven:check'
+    options: '-Dmaven.test.failure.ignore=true'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+
+# Trivy CLI scan
+- script: |
+    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+    ./trivy fs .
+  displayName: 'Run Trivy security scan'
+
+# Publish build artifacts
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(System.DefaultWorkingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
