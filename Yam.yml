@@ -1,0 +1,47 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Store your SonarQube token securely in DevOps → Pipelines → Library → Variables
+  SonarQubeToken: $(SonarQubeToken)
+
+steps:
+# ✅ Ensure full Git history (fixes SonarQube shallow clone warning)
+- checkout: self
+  fetchDepth: 0
+
+# 🛠️ Build, Test, and SonarQube Analysis in one Maven run
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'clean verify sonar:sonar'
+    options: >
+      -Dsonar.projectKey=boardgames
+      -Dsonar.host.url=http://20.207.202.98:9000
+      -Dsonar.login=$(SonarQubeToken)
+
+# 📦 Package Artifact (JAR/WAR)
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'package'
+
+# 🚀 Publish Build Artifact
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: 'target/*.jar'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+
+# 🐳 Docker Build & Push
+- task: Docker@2
+  inputs:
+    command: buildAndPush
+    repository: boardgames
+    dockerfile: '**/Dockerfile'
+    containerRegistry: 'DockerHubServiceConnection'
+    tags: |
+      $(Build.BuildId)

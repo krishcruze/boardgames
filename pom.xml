@@ -53,21 +53,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- Trivy Maven plugin -->
-            <plugin>
-                <groupId>io.github.audunhalland</groupId>
-                <artifactId>trivy-maven-plugin</artifactId>
-                <version>0.2.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>scan</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            </plugin>                           
         </plugins>
     </build>
 </project>
